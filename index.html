@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P5 Project - Video Player</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      color: white;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      font-size: 2rem;
+      color: #1DB954;
+      margin: 20px 0;
+    }
+    video {
+      width: 80%;
+      max-width: 800px;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    }
+    .video-controls {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+    }
+    .comments {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      width: 80%;
+      max-width: 800px;
+    }
+    .comment {
+      margin-bottom: 10px;
+      padding: 5px;
+      background-color: #333;
+      border-radius: 5px;
+    }
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .input-container input {
+      padding: 10px;
+      margin-top: 10px;
+      width: 80%;
+      max-width: 800px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .input-container button {
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #1DB954;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .input-container button:hover {
+      background-color: #1ed760;
+    }
+  </style>
+</head>
+<body>
+
+  <header>P5 Project</header>
+
+  <!-- Video Player -->
+  <video id="player" controls playsinline>
+    <source src="https://your-storage-url.com/video-720p.mp4" type="video/mp4" size="720">
+    <source src="https://your-storage-url.com/video-480p.mp4" type="video/mp4" size="480">
+  </video>
+
+  <!-- Speed control -->
+  <div class="video-controls">
+    <button onclick="player.playbackRate = 0.5">0.5x</button>
+    <button onclick="player.playbackRate = 1">1x</button>
+    <button onclick="player.playbackRate = 1.5">1.5x</button>
+    <button onclick="player.playbackRate = 2">2x</button>
+  </div>
+
+  <!-- Comment Section -->
+  <h3>Komentar:</h3>
+  <div class="comments" id="comments"></div>
+
+  <!-- Input for username and comment -->
+  <div class="input-container" id="commentInputContainer" style="display: none;">
+    <input type="text" id="usernameInput" placeholder="Masukkan nama pengguna..." />
+    <input type="text" id="commentInput" placeholder="Tulis komentar..." />
+    <button onclick="postComment()">Kirim</button>
+  </div>
+
+  <!-- Login Section -->
+  <div id="loginContainer" style="display: block; text-align: center;">
+    <button onclick="loginWithGoogle()">Login dengan Google</button>
+  </div>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_DOMAIN.firebaseapp.com",
+      databaseURL: "https://YOUR_DOMAIN.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_DOMAIN.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    const player = new Plyr('#player');
+
+    // Function to login with Google
+    function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('commentInputContainer').style.display = 'block';
+        })
+        .catch((error) => {
+          console.error(error.message);
+        });
+    }
+
+    // Post comment
+    function postComment() {
+      const username = document.getElementById('usernameInput').value;
+      const comment = document.getElementById('commentInput').value;
+      if (username && comment) {
+        db.ref('comments').push({ username: username, text: comment });
+        document.getElementById('commentInput').value = '';
+      }
+    }
+
+    // Load comments
+    db.ref('comments').on('child_added', snap => {
+      const div = document.createElement('div');
+      div.className = 'comment';
+      div.innerText = `${snap.val().username}: ${snap.val().text}`;
+      document.getElementById('comments').appendChild(div);
+    });
+  </script>
+
+</body>
+</html>
